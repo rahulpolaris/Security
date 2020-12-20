@@ -6,6 +6,7 @@ const bodyParser = require("body-parser")
 const  lodash = require('lodash')
 const path = require('path')
 const date = require(__dirname +'/date.js')
+const encrypt = require("mongoose-encryption")
 
 
 const app = express()
@@ -23,6 +24,9 @@ const userSchema = new mongoose.Schema(
     username: {type: "string",required:"please enter a username"},
     password: {type: "string",required:"please enter a password"}
   })
+  
+  const secret = "thisisouronetruesecretok"
+  userSchema.plugin(encrypt,{secret:secret,encryptedFields: ['password']})
 
   const User = new mongoose.model('userdata',userSchema);
 
@@ -60,9 +64,9 @@ app.route("/login")
       {
         res.redirect("/login")
         console.log("passwrod didnt match")
-        console.log(req.body.password)
-        console.log(typeof(req.body.password))
-        console.log(foundUser)
+        // console.log(req.body.password)
+        // console.log(typeof(req.body.password))
+        // console.log(foundUser)
       }
     }
     else 
@@ -72,6 +76,10 @@ app.route("/login")
     }
   })
 })
+
+
+
+
 
 
 
