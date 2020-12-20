@@ -1,5 +1,5 @@
 //jshint esversion:6
-
+require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
 const bodyParser = require("body-parser")
@@ -7,6 +7,7 @@ const  lodash = require('lodash')
 const path = require('path')
 const date = require(__dirname +'/date.js')
 const encrypt = require("mongoose-encryption")
+const sha256 = require('sha-256-js');
 
 
 const app = express()
@@ -25,8 +26,13 @@ const userSchema = new mongoose.Schema(
     password: {type: "string",required:"please enter a password"}
   })
   
-  const secret = "thisisouronetruesecretok"
-  userSchema.plugin(encrypt,{secret:secret,encryptedFields: ['password']})
+  // const secret = "thisisouronetruesecretok";
+// this is our main encrypting key and also used to decrypt so we stored above in an .env file
+const secret = process.env.SECRET
+
+
+
+  userSchema.plugin(encrypt,{secret: secret , encryptedFields: ['password']})
 
   const User = new mongoose.model('userdata',userSchema);
 
@@ -51,10 +57,11 @@ app.route("/login")
 {
   console.log(req.body)
   console.log("----------------------")
+  console.log("the passsword is:---> "+sha256(req.body.password))
   User.findOne({username:req.body.username},(err,foundUser)=>{
     if(foundUser)
     {
-      if(req.body.password==foundUser.password)
+      if(sha256(req.body.password)==foundUser.password)
       {
        res.render("secrets",{})
        console.log("access granted")
@@ -100,7 +107,7 @@ app.route("/register")
       const newUser = new User(
       {
        username:req.body.username,
-       password:req.body.password
+       password:sha256(req.body.password)
       })
       newUser.save()
       res.redirect("/")
@@ -129,6 +136,9 @@ app.listen(3000, function()
    console.log("<********************************************************>");
    console.log("full date is:    "+date.getDate());
    console.log("current time is: "+ date.getTime());
+  //  console.log(process.env.API_KEY)
+  //  console.log(typeof(process.env.API_KEY))
+  //  console.log("rahul"+sha256("rahul"))
   
   
   });
