@@ -7,8 +7,9 @@ const  lodash = require('lodash')
 const path = require('path')
 const date = require(__dirname +'/date.js')
 const encrypt = require("mongoose-encryption")
-const sha256 = require('sha-256-js');
-
+// const sha256 = require('sha-256-js');
+const bcrypt = require('bcrypt');
+//now we use industry standard bcrypt hashinf instead of sha256
 
 const app = express()
 
@@ -57,11 +58,14 @@ app.route("/login")
 {
   console.log(req.body)
   console.log("----------------------")
-  console.log("the passsword is:---> "+sha256(req.body.password))
+  console.log("the passsword is:---> "+req.body.password)
   User.findOne({username:req.body.username},(err,foundUser)=>{
     if(foundUser)
-    {
-      if(sha256(req.body.password)==foundUser.password)
+    {  
+      bcrypt.compare(req.body.password,foundUser.password, function(err, result) 
+     {
+       // result == true
+      if(result==true)
       {
        res.render("secrets",{})
        console.log("access granted")
@@ -75,6 +79,9 @@ app.route("/login")
         // console.log(typeof(req.body.password))
         // console.log(foundUser)
       }
+              
+      });
+      
     }
     else 
     {
@@ -104,13 +111,20 @@ app.route("/register")
     
     if (foundUsers.length==0)
     {   
-      const newUser = new User(
+
+
+      bcrypt.hash(req.body.password, 10, function(err, hash) 
       {
-       username:req.body.username,
-       password:sha256(req.body.password)
-      })
-      newUser.save()
-      res.redirect("/")
+        // Store hash in your password DB.
+        const newUser = new User(
+          {
+           username:req.body.username,
+           password:hash
+          })
+          newUser.save()
+          res.redirect("/")
+      });
+      
 
     }
     else
@@ -138,7 +152,11 @@ app.listen(3000, function()
    console.log("current time is: "+ date.getTime());
   //  console.log(process.env.API_KEY)
   //  console.log(typeof(process.env.API_KEY))
-  //  console.log("rahul"+sha256("rahul"))
+  //  console.log("rahul's sha256 hash: "+sha256(sha256("rahul53")))
+  bcrypt.hash("Rahul", 5, function(err, hash) {
+    // Store hash in your password DB.
+    console.log("Rahul's bcrypt hash with 5 salting round is: "+hash)
+});
   
   
   });
